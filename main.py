@@ -4,10 +4,9 @@ from watchdog.observers import Observer
 
 from modules.discord_log_file_handler import DiscordLogFileHandler
 
-# Configuration - easily change these values
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 SOUND_FILE = os.path.join(SCRIPT_DIR, "sound_to_play.wav")
-OUTPUT_DEVICE_NAME = "CABLE In 16ch"  # Change this to your desired output device
+OUTPUT_DEVICE_NAME = "CABLE In 16ch"
 
 def get_discord_logs_directory():
     """Get the Discord logs directory path for the current OS"""
@@ -19,7 +18,7 @@ def get_discord_logs_directory():
     elif system == "linux":
         home = os.path.expanduser("~")
         return os.path.join(home, ".config", "discord", "logs")
-    elif system == "darwin":  # macOS
+    elif system == "darwin":
         home = os.path.expanduser("~")
         return os.path.join(home, "Library", "Application Support", "discord", "logs")
     return None
