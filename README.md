@@ -4,7 +4,7 @@ Plays a sound effect when you join a Discord voice channel.
 
 ## What it does
 
-This script monitors Discord's log files and automatically plays a sound effect (`cyberpunk.wav`) when you connect to a voice channel.
+This script monitors Discord's log files and automatically plays a sound effect (`sound_to_play.wav`) when you connect to a voice channel.
 
 ## Setup
 
@@ -20,7 +20,7 @@ You can easily customize the script by editing the configuration section at the 
 ```python
 # Configuration - easily change these values
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-SOUND_FILE = os.path.join(SCRIPT_DIR, "cyberpunk.wav")  # Change to your sound file
+SOUND_FILE = os.path.join(SCRIPT_DIR, "sound_to_play.wav")  # Change to your sound file
 OUTPUT_DEVICE_NAME = "CABLE In 16ch"  # Change to your audio device
 ```
 
