@@ -25,7 +25,7 @@ OUTPUT_DEVICE_NAME = "CABLE In 16ch"  # Change to your audio device
 ```
 
 **Sound File Options:**
-- Replace `cyberpunk.wav` with any WAV file you prefer
+- Replace `sound_to_play.wav` with any WAV file you prefer
 - The script automatically finds the file relative to the script location
 - WAV format is recommended for best compatibility
 
