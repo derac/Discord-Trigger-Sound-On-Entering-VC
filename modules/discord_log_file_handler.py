@@ -1,15 +1,10 @@
-import os, wave
+import os, wave, time
 
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler
 import pyaudio
 
-class DiscordLogFileHandler(FileSystemEventHandler):
+class DiscordLogFileHandler():
     def __init__(self, log_file_path, OUTPUT_DEVICE_NAME, SOUND_FILE):
         super().__init__()
-        self.log_file_path = os.path.abspath(log_file_path)
-        self.file_handle = None
-        self.last_position = 0
         self.audio = pyaudio.PyAudio()
         self.OUTPUT_DEVICE_NAME = OUTPUT_DEVICE_NAME
         self.SOUND_FILE = SOUND_FILE
@@ -23,67 +18,50 @@ class DiscordLogFileHandler(FileSystemEventHandler):
             print(f"❌ No suitable output device found for '{self.OUTPUT_DEVICE_NAME}'")
             print("Available output devices:")
             self.list_available_devices()
-        
-        self._open_log_file()
-        
+
         # Check if sound file exists
         if os.path.exists(self.SOUND_FILE):
             print(f"Sound file found: {self.SOUND_FILE}")
         else:
             print(f"Sound file not found: {self.SOUND_FILE}")
 
-    def _open_log_file(self):
-        if self.file_handle:
-            self.file_handle.close()
-        try:
-            self.file_handle = open(self.log_file_path, 'r', encoding='utf-8', errors='ignore')
-            self.file_handle.seek(0, os.SEEK_END)
-            self.last_position = self.file_handle.tell()
-            print(f"Monitoring log file: {self.log_file_path}")
-        except FileNotFoundError:
-            print(f"Log file not found: {self.log_file_path}")
-            self.file_handle = None
-        except Exception as e:
-            print(f"Error opening log file: {e}")
-            self.file_handle = None
+        self.follow(log_file_path)
 
-    def on_modified(self, event):
-        if os.path.abspath(event.src_path) == self.log_file_path and self.file_handle:
-            try:
-                current_size = os.path.getsize(self.log_file_path)
-                
-                if current_size < self.last_position:
-                    print("Log file was truncated, reopening...")
-                    self._open_log_file()
-                    return
-                
-                if current_size > self.last_position:
-                    self.file_handle.seek(self.last_position)
-                    new_content = self.file_handle.read()
-                    if new_content:
-                        lines = new_content.splitlines()
-                        for line in lines:
-                            if "Connection state change: CONNECTING => CONNECTED" in line:
-                                print("Connected to Discord voice channel")
-                                self.play_sound()
-                    
-                    self.last_position = self.file_handle.tell()
-                    
-            except Exception as e:
-                print(f"Error reading log file: {e}")
-                self._open_log_file()
+    def follow(self, file_path, sleep_sec=0.5):
+        """
+        Mimics `tail -f` while handling log rotation.
+        """
+        with open(file_path, "r") as f:
+            # Go to the end of the file
+            f.seek(0, os.SEEK_END)
+            inode = os.fstat(f.fileno()).st_ino
 
-    def on_created(self, event):
-        if os.path.abspath(event.src_path) == self.log_file_path:
-            print(f"Log file created: {event.src_path}. Reopening...")
-            self._open_log_file()
+            while True:
+                line = f.readline()
+                if line:
+                    if "Connection state change: CONNECTING => CONNECTED" in line:
+                        print(f"Playing {self.SOUND_FILE}", end="")
+                        self.play_sound()
+                else:
+                    # Check if the file has been rotated
+                    try:
+                        new_inode = os.stat(file_path).st_ino
+                    except FileNotFoundError:
+                        new_inode = None
 
-    def on_deleted(self, event):
-        if os.path.abspath(event.src_path) == self.log_file_path:
-            print(f"Log file deleted: {event.src_path}. Waiting for new file...")
-            if self.file_handle:
-                self.file_handle.close()
-                self.file_handle = None
+                    if new_inode != inode:
+                        try:
+                            # Reopen the file
+                            f.close()
+                            f = open(file_path, "r")
+                            inode = os.fstat(f.fileno()).st_ino
+                            print(f"\n--- Log rotated, reopened {file_path} ---\n")
+                        except FileNotFoundError:
+                            # File doesn’t exist yet, wait until recreated
+                            time.sleep(sleep_sec)
+                            continue
+                    else:
+                        time.sleep(sleep_sec)
 
     def list_available_devices(self):
         """List all available audio output devices"""

@@ -1,6 +1,5 @@
 #!/usr/bin/python
-import os, time, platform
-from watchdog.observers import Observer
+import os, platform
 
 from modules.discord_log_file_handler import DiscordLogFileHandler
 
@@ -44,16 +43,5 @@ if __name__ == "__main__":
     print(f"Log file: {full_log_path}")
     print("Press Ctrl+C to stop")
     
-    event_handler = DiscordLogFileHandler(full_log_path, OUTPUT_DEVICE_NAME, SOUND_FILE)
-    observer = Observer()
-    observer.schedule(event_handler, log_directory, recursive=False)
-    observer.start()
-
-    try:
-        while True:
-            time.sleep(0.1)
-    except KeyboardInterrupt:
-        print("\nStopping monitor...")
-        observer.stop()
-    observer.join()
+    DiscordLogFileHandler(full_log_path, OUTPUT_DEVICE_NAME, SOUND_FILE)
     print("Monitor stopped.")
