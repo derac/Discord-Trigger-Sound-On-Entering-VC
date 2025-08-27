@@ -8,6 +8,7 @@ class DiscordLogFileHandler():
         self.audio = pyaudio.PyAudio()
         self.OUTPUT_DEVICE_NAME = OUTPUT_DEVICE_NAME
         self.SOUND_FILE = SOUND_FILE
+        self.last_trigger_time = 0
         
         # Choose output device on init
         self.output_device_index = self.find_output_device()
@@ -25,11 +26,11 @@ class DiscordLogFileHandler():
         else:
             print(f"Sound file not found: {self.SOUND_FILE}")
 
-        self.follow(log_file_path)
+        self.watch_log(log_file_path)
 
-    def follow(self, file_path, sleep_sec=0.5):
+    def watch_log(self, file_path, sleep_sec=0.5):
         """
-        Mimics `tail -f` while handling log rotation.
+        Mimics `tail -f` while handling log rotation and preventing duplicate triggers.
         """
         with open(file_path, "r") as f:
             # Go to the end of the file
@@ -37,10 +38,15 @@ class DiscordLogFileHandler():
             inode = os.fstat(f.fileno()).st_ino
 
             while True:
+                pos = f.tell()  # Store current position
                 line = f.readline()
                 if line:
-                    if "Connection state change: CONNECTING => CONNECTED" in line:
-                        print(f"Playing {self.SOUND_FILE}", end="")
+                    current_position = f.tell()
+                    
+                    if "default)] RTC media connection state change: RTC_CONNECTING => CONNECTED" in line and time.time() - self.last_trigger_time > 5:
+                        print(f"DEBUG: Position {pos}, line: {line.strip()[:80]}")  # Debug line
+                        print(f"Playing {self.SOUND_FILE} (triggered at position {pos})")
+                        self.last_trigger_time = time.time()  # Update trigger time
                         self.play_sound()
                 else:
                     # Check if the file has been rotated

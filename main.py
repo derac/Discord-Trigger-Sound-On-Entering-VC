@@ -4,7 +4,7 @@ import os, platform
 from modules.discord_log_file_handler import DiscordLogFileHandler
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-SOUND_FILE = os.path.join(SCRIPT_DIR, "sound_to_play.wav")
+SOUND_FILE = os.path.join(SCRIPT_DIR, "sounds", "sound_to_play.wav")
 OUTPUT_DEVICE_NAME = "CABLE In 16ch"
 
 def get_discord_logs_directory():
